@@ -2,25 +2,43 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1c1c1e;
+  --surface: #f7f8fa;
+  --hairline: #e0e2e8;
+  --muted: #6b6f7e;
+  /* 캐릭터 '든든' 색감: 민트 재킷, 피치 셔츠 */
+  --brand: #bfe6cf;
+  --brand-soft: #eef8f2;
+  --user: #2f7a5e;
+  --accent: #4262ff;
+  --ok: #00b473;
+  --danger: #e5484d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-surface: var(--surface);
+  --color-hairline: var(--hairline);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-user: var(--user);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-noto-sans-kr), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
+  background: var(--surface);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* 모바일 터치 영역 최소 44px */
+button,
+a[role="button"] {
+  min-height: 44px;
 }

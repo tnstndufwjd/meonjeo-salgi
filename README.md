@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 먼저살기 — 든든이랑 같이 챙겨요
 
-## Getting Started
+보호가 끝나고 혼자 생활을 시작한 **자립준비청년**이 AI 선배 **‘든든’**에게 채팅으로 물어보면, 공공데이터에서 받을 수 있는 지원을 찾아 알려 주는 모바일 웹 서비스입니다.
 
-First, run the development server:
+- **서비스 주소**: https://meonjeo-salgi.vercel.app
+- 2026 AI 라이프 솔루션 챌린지(산업통상부·KEIT) 출품작. 아이디어 챌린지 수상 후보작 ‘먼저살기’를 구현했습니다.
+- 시연용 서비스입니다. 입력한 대화는 서버에 저장하지 않습니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 무엇을 해 주나
+
+“월세 내고 나니 식비가 모자라”처럼 말하면, AI가 필요한 도구를 스스로 골라 호출해 한 번의 대화로 답합니다. 답변 아래에는 근거가 된 **원래 데이터를 카드로** 보여 주고 출처와 조회일을 표시합니다.
+
+| 영역 | 하는 일 |
+|---|---|
+| 청년정책 | 온통청년 3,234건 중 **지금 신청할 수 있는** 정책을 지역·분야·나이로 찾기. 자립준비청년 대상 정책을 먼저 보여 줌 |
+| 복지 | 중앙부처·지자체 복지서비스(전국 시도·시군구), 푸드뱅크·문화누리카드 안내 |
+| 주거 | 지역 월세 시세(전용 40㎡ 이하 소형 기준), LH 공공임대·매입임대 접수 중 공고(마감 임박 순) |
+| 일자리·교육 | 가까운 고용센터(주소·전화·지도), 직업훈련·취업 지원 제도 |
+| 일상 | 식약처 레시피 기반 간단 요리(라면 나트륨 줄이는 팁), 무료 문화행사 |
+| 계산 | 수입·지출로 3개월 뒤 잔액 계산(유지 / 훈련 후 취업 / 주거비 절감) |
+| 안전 | 위기 발화는 AI보다 먼저 규칙으로 감지해 109 연결, 전화 상담 창구 상시 노출 |
+
+## 설계 원칙
+
+- **판단과 계산의 분리**: LLM은 상황 이해·도구 선택·쉬운 설명을, 코드는 금액 계산·입력 검증·위기 감지·범위 필터를 맡습니다.
+- **근거 기반 응답**: 제도·금액·날짜는 도구 조회 결과로만 답합니다. 없는 제도를 물으면 “자료에 없다”고 답합니다.
+- **판정하지 않기**: 신청 자격(소득·연령·거주)과 주택 안전성을 판정하지 않고, 조건을 원문 그대로 보여 주며 공식 창구로 연결합니다.
+- **데이터가 불안정할 때 솔직하게**: 호출 실패는 “불러오지 못했다”고 알리고, 영양 수치처럼 서로 맞지 않는 값은 ‘참고용’으로 표시합니다.
+- **최소 수집**: 대화 원문을 저장하지 않고, 서버 로그에는 토큰 수만 남깁니다.
+
+## 공공데이터
+
+| 데이터 | 제공기관 | 키 |
+|---|---|---|
+| 청년정책 (`youthcenter.go.kr/go/ythip/getPlcy`) | 한국고용정보원(온통청년) | `YOUTH_API_KEY` |
+| 중앙부처·지자체 복지서비스 | 한국사회보장정보원 | `DATA_GO_KR_KEY` |
+| 전월세 실거래가(아파트·연립다세대·오피스텔) | 국토교통부 | `DATA_GO_KR_KEY` |
+| 분양임대공고문 | 한국토지주택공사 | `DATA_GO_KR_KEY` |
+| 공연·전시·행사 | 한국문화정보원 | `DATA_GO_KR_KEY` |
+| 조리식품의 레시피 DB | 식품의약품안전처 | `FOODSAFETY_KEY` |
+| 고용센터 목록 133곳 (`src/data/employment-centers.json`, 2026-10-09 스냅샷) | 고용노동부(고용24) | 없음 |
+
+API별로 확인한 사실과 한계(호출 제한, 지역 코드, 신청 기간 코드 등)는 코드 주석에 근거와 함께 적어 두었습니다. 예) `src/lib/publicapi/youth.ts`, `culture.ts`, `housing.ts`.
+
+## 구조
+
+```
+src/app/            화면(홈, 채팅, 생활비 계산)과 API 라우트(/api/chat 등)
+src/lib/agent/      시스템 지시문, 도구 정의·실행, 카드 타입
+src/lib/publicapi/  공공데이터 호출 모듈 (캐시, 재시도, 호출 제한 대응)
+src/components/     채팅 화면, 데이터 카드
+scripts/            로직·API 검증 스크립트 (아래 참고)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+AI는 Claude(Opus 5.5)의 도구 호출 기능을 사용하며, `/api/chat`이 NDJSON으로 답변 글자, 진행 상태, 근거 카드를 흘려 보냅니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 실행
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+cp .env.example .env.local   # 아래 키를 채운다
+npm run dev                  # http://localhost:3000
+```
 
-## Learn More
+| 환경변수 | 용도 |
+|---|---|
+| `ANTHROPIC_API_KEY` | AI 상담 |
+| `DATA_GO_KR_KEY` | data.go.kr 계열 API (인증키는 API별로 활용신청 필요) |
+| `FOODSAFETY_KEY` | 식품안전나라 레시피. 비우면 공개 샘플 키로 동작(질의당 5건) |
+| `YOUTH_API_KEY` | 온통청년 청년정책 |
+| `CHAT_PER_IP_PER_HOUR`, `CHAT_GLOBAL_PER_DAY` | 채팅 요청 제한(선택, 기본 20 / 400) |
 
-To learn more about Next.js, take a look at the following resources:
+## 검증
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+node --no-warnings scripts/check-core.mjs         # 시나리오 계산, 위기 감지
+node --no-warnings scripts/check-centers.mjs      # 고용센터 찾기 (관할 추정 등)
+node --no-warnings scripts/check-tool-inputs.mjs  # 도구 입력 검증식
+node --no-warnings scripts/check-recipes.mjs      # 레시피 (키 필요)
+node --no-warnings scripts/check-culture.mjs      # 문화 API (키 필요)
+node --no-warnings scripts/check-youth.mjs        # 온통청년 API (키 필요)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 한계
 
-## Deploy on Vercel
+- 고용24 채용·훈련 API는 키 발급 절차(기업회원 심사)가 필요해 현재는 공식 창구 링크로 연결합니다.
+- 월세 시세는 9개 지역만 지원합니다.
+- 푸드마켓·푸드뱅크의 위치 목록은 공공데이터에서 찾지 못해 공식 사이트와 행정복지센터 문의로 안내합니다.
+- 서버를 새로 띄운 뒤 첫 청년정책 조회는 전체 적재 때문에 느립니다(약 10초 추가).
+- 시나리오 계산의 가정값은 예시이며, 실제 청년을 대상으로 한 사용성 검증은 하지 못했습니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 지식재산
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+공고문 9항에 따라, 아이디어 챌린지 입상작을 기반으로 한 이 솔루션의 지식재산은 아이디어 제안자와 개발자가 협의해 정하는 것을 원칙으로 합니다. 별도 라이선스를 지정하기 전까지 모든 권리는 보유됩니다.

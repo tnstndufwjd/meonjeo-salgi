@@ -1,0 +1,8 @@
+.env*
+!.env.example
+key.txt
+sk-ant-*
+*.txt
+node_modules
+.next
+scripts
