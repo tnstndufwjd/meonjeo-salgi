@@ -45,6 +45,11 @@ export const OFFICIAL_LINKS = {
     desc: "통합문화이용권(문화누리카드) 신청과 가맹점 안내",
     href: "https://www.mnuri.kr",
   },
+  chorogusan_6x: {
+    title: "초록우산 6배 슬기로운 후원생활 (☎ 1588-1940)",
+    desc: "후원자가 월 1만 원을 후원하면 초록우산 1만 원, 지자체 4만 원이 더해져 월 6만 원이 디딤씨앗통장에 적립돼요. 보호대상아동과 자립준비청년(만 18~24세)이 대상이에요. 현금 지급이 아니라 통장 적립이고, 대상 여부와 지자체 매칭은 초록우산에 확인해야 해요",
+    href: "https://www.chorogusan.or.kr/camp/cpView20001369_main.do",
+  },
   youth_call: {
     title: "온통청년 전화상담 (☎ 1670-1839)",
     desc: "청년정책과 생활 고민을 전화로 상담 · 평일 09~18시",
